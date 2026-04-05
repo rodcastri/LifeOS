@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Life OS">
+<meta name="theme-color" content="#1D9E75">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Life OS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --g:#1D9E75;--gl:#E1F5EE;--gd:#085041;
+  --am:#BA7517;--aml:#FAEEDA;--amd:#633806;
+  --co:#D85A30;--col:#FAECE7;--cod:#712B13;
+  --bl:#185FA5;--bll:#E6F1FB;--bld:#0C447C;
+  --pu:#534AB7;--pul:#EEEDFE;--pud:#3C3489;
+  --rl:#FCEBEB;--rd:#791F1F;
+  --bg:#ffffff;--bg2:#f5f5f3;--bg3:#ebebeb;
+  --tx:#111;--tx2:#555;--tx3:#999;
+  --br:rgba(0,0,0,0.1);--br2:rgba(0,0,0,0.18);
+  --rad:12px;--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#252525;
+  --tx:#f0f0f0;--tx2:#aaa;--tx3:#666;
+  --br:rgba(255,255,255,0.1);--br2:rgba(255,255,255,0.18);
+}}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
+#app{height:100%;display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:relative}
+
+/* ── Header ── */
+.header{padding:52px 20px 14px;background:var(--bg);border-bottom:0.5px solid var(--br);flex-shrink:0}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.greeting{font-size:10px;color:var(--tx3);font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+.day-name{font-size:20px;font-weight:600;color:var(--tx);margin-top:1px}
+.day-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+.score-ring{width:48px;height:48px;cursor:pointer;flex-shrink:0}
+.quote{background:var(--bg2);border-radius:10px;padding:9px 12px;margin-bottom:10px;border-left:3px solid var(--g)}
+.quote-text{font-size:12px;color:var(--tx);line-height:1.5;font-style:italic}
+.quote-author{font-size:10px;color:var(--tx3);margin-top:3px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:var(--bg2);border-radius:8px;padding:7px 6px;text-align:center}
+.stat-val{font-size:13px;font-weight:600}.stat-lbl{font-size:9px;color:var(--tx3);margin-top:1px}
+
+/* ── Nav ── */
+.nav-tabs{display:flex;border-bottom:0.5px solid var(--br);overflow-x:auto;scrollbar-width:none;flex-shrink:0;background:var(--bg)}
+.nav-tabs::-webkit-scrollbar{display:none}
+.ntab{flex-shrink:0;padding:10px 14px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s}
+.ntab.on{color:var(--g);border-bottom-color:var(--g)}
+
+/* ── Body / scroll ── */
+.tab-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(20px + var(--safe-bottom))}
+.page{display:none;padding:16px 20px}
+.page.on{display:block}
+
+/* ── Blocks ── */
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sh-t{font-size:13px;font-weight:600;color:var(--tx)}
+.sh-s{font-size:12px;color:var(--tx3)}
+.pbar{height:3px;background:var(--bg3);border-radius:2px;margin-bottom:14px;overflow:hidden}
+.pfill{height:100%;border-radius:2px;background:var(--g);transition:width .4s}
+.blk{display:flex;align-items:center;gap:6px;margin:14px 0 6px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3)}
+.bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.gold-label{display:flex;align-items:center;gap:6px;margin:14px 0 6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gd);background:var(--gl);border-radius:8px;padding:6px 10px}
+
+/* ── Tasks ── */
+.tr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--br);cursor:pointer;user-select:none}
+.tr:last-child{border-bottom:none}
+.tr:active{opacity:.7}
+.chk{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--br2);flex-shrink:0;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.chk.done{background:var(--g);border-color:var(--g)}
+.chk.done::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px)}
+.chk.bad{border-color:var(--co);background:var(--col)}
+.tb{flex:1;min-width:0}
+.tn{font-size:13px;color:var(--tx);line-height:1.3}
+.tn.done{text-decoration:line-through;color:var(--tx3)}
+.tf{display:flex;gap:5px;align-items:center;margin-top:3px;flex-wrap:wrap}
+.pill{font-size:10px;font-weight:500;padding:1px 7px;border-radius:20px}
+.pill.g{background:var(--gl);color:var(--gd)}.pill.am{background:var(--aml);color:var(--amd)}
+.pill.co{background:var(--col);color:var(--cod)}.pill.bl{background:var(--bll);color:var(--bld)}
+.pill.pu{background:var(--pul);color:var(--pud)}.pill.rl{background:var(--rl);color:var(--rd)}
+.ttag{font-size:10px;color:var(--tx3)}
+.cdot{width:6px;height:6px;background:var(--co);border-radius:50%;flex-shrink:0}
+.apulse{font-size:10px;background:var(--col);color:var(--cod);padding:1px 7px;border-radius:20px;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── Habits ── */
+.hgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hcard{border-radius:12px;padding:12px 8px;text-align:center;border:0.5px solid var(--br);cursor:pointer;transition:all .15s;background:var(--bg);user-select:none}
+.hcard:active{transform:scale(.96)}
+.hcard.done{background:var(--gl);border-color:var(--g)}
+.hcard.bad-h{background:var(--rl);border-color:var(--co)}
+.hcard.bad-h.done{background:var(--gl);border-color:var(--g)}
+.hico{font-size:20px;margin-bottom:4px}
+.hn{font-size:11px;font-weight:500;color:var(--tx2)}
+.hs{font-size:10px;color:var(--g);margin-top:2px;font-weight:500}
+.hs.z{color:var(--tx3)}
+.identity{background:var(--bg2);border-radius:10px;padding:10px 13px;margin-top:12px}
+.id-title{font-size:11px;font-weight:500;color:var(--tx2);margin-bottom:8px}
+.id-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+.id-name{font-size:12px;color:var(--tx);flex:1}
+.id-streak{font-size:11px;font-weight:500;color:var(--g)}
+
+/* ── Goals ── */
+.goal-card{border-radius:12px;border:0.5px solid var(--br);padding:12px 14px;margin-bottom:8px;background:var(--bg)}
+.gc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.gc-name{font-size:13px;font-weight:500;color:var(--tx)}
+.gc-bar{height:5px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:6px}
+.gc-fill{height:100%;border-radius:4px;transition:width .5s}
+.gc-sub{display:flex;justify-content:space-between;font-size:11px;color:var(--tx3)}
+
+/* ── Finance ── */
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.fc{background:var(--bg2);border-radius:10px;padding:12px}
+.fl{font-size:10px;color:var(--tx3);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.fv{font-size:20px;font-weight:600;margin-top:4px}
+.fs{font-size:11px;color:var(--tx3);margin-top:2px}
+
+/* ── Focus (Pomodoro) ── */
+.war{background:#0a0a0a;border-radius:16px;padding:20px;text-align:center;margin-bottom:10px}
+.war-task{font-size:15px;font-weight:500;color:#fff;margin-bottom:3px;line-height:1.4}
+.war-sub{font-size:11px;color:#555;margin-bottom:14px}
+.war-timer{font-size:48px;font-weight:600;color:#1D9E75;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.war-phase{font-size:11px;color:#555;margin:4px 0 14px}
+.war-btns{display:flex;gap:8px;justify-content:center}
+.wbtn{padding:10px 22px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;border:none}
+.wbtn.p{background:#1D9E75;color:#fff}.wbtn.s{background:#1f1f1f;color:#aaa}
+
+/* ── Notifications panel ── */
+.ni{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid var(--br)}
+.ni:last-child{border-bottom:none}
+.ni-ico{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+.ni-title{font-size:13px;font-weight:500;color:var(--tx)}
+.ni-desc{font-size:11px;color:var(--tx2);margin-top:2px;line-height:1.4}
+.ni-time{font-size:10px;color:var(--tx3);margin-top:3px}
+.ni-act{font-size:11px;font-weight:500;color:var(--g);margin-top:4px;cursor:pointer}
+.tog-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:0.5px solid var(--br);cursor:pointer}
+.tog-row:last-child{border-bottom:none}
+.tog-body{flex:1}
+.tog-lbl{font-size:13px;font-weight:500;color:var(--tx)}
+.tog-desc{font-size:11px;color:var(--tx3);margin-top:2px;line-height:1.4}
+.tog{width:38px;height:22px;border-radius:20px;position:relative;transition:background .2s;flex-shrink:0}
+.tok{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+
+/* ── Score ── */
+.score-hero{text-align:center;padding:20px 0 14px;border-bottom:0.5px solid var(--br)}
+.snum{font-size:56px;font-weight:600;color:var(--g);line-height:1}
+.smsg{font-size:13px;color:var(--tx2);margin-top:4px}
+.wrow{display:flex;gap:6px;align-items:flex-end;height:60px;margin:12px 0 4px}
+.wbc{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.wbg{width:100%;background:var(--bg3);border-radius:4px;overflow:hidden;flex:1;display:flex;align-items:flex-end}
+.wbf{width:100%;border-radius:4px;background:var(--g)}
+.wbf.lo{background:var(--aml)}
+.wday{font-size:10px;color:var(--tx3)}
+.sbg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.sbc{background:var(--bg2);border-radius:10px;padding:10px 12px}
+.sbl{font-size:10px;color:var(--tx3);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.sbv{font-size:18px;font-weight:600;margin-top:2px}
+
+/* ── Oportunidades ── */
+.opp-card{border-radius:12px;border:0.5px solid var(--br);padding:14px;margin-bottom:8px;background:var(--bg);cursor:pointer;transition:background .15s}
+.opp-card:active{background:var(--bg2)}
+.opp-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.opp-name{font-size:14px;font-weight:600;color:var(--tx)}
+.opp-desc{font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:8px}
+.opp-foot{display:flex;gap:6px;flex-wrap:wrap}
+.opp-meta{font-size:10px;color:var(--tx3);background:var(--bg2);padding:2px 8px;border-radius:6px}
+
+/* ── Add button ── */
+.add-btn{width:100%;margin-top:10px;padding:11px;border-radius:10px;border:0.5px dashed var(--br2);background:transparent;cursor:pointer;font-size:12px;color:var(--tx3);transition:background .15s}
+.add-btn:active{background:var(--bg2)}
+
+/* ── Notification banner ── */
+.notif-banner{position:fixed;top:0;left:50%;transform:translateX(-50%);width:min(430px,100%);z-index:999;padding:52px 12px 0}
+.nb-inner{background:#111;color:#fff;border-radius:14px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:slideDown .3s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+.nb-ico{font-size:20px;flex-shrink:0}
+.nb-title{font-size:13px;font-weight:600;color:#fff}
+.nb-body{font-size:12px;color:#aaa;margin-top:2px}
+.nb-close{font-size:18px;color:#666;cursor:pointer;flex-shrink:0;padding:0 4px}
+
+/* ── Onboarding ── */
+#onboard{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+.ob-icon{font-size:64px;margin-bottom:20px}
+.ob-title{font-size:24px;font-weight:700;color:var(--tx);margin-bottom:8px}
+.ob-sub{font-size:15px;color:var(--tx2);line-height:1.6;margin-bottom:32px}
+.ob-btn{background:var(--g);color:#fff;border:none;border-radius:14px;padding:16px 36px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:320px}
+.ob-skip{font-size:13px;color:var(--tx3);margin-top:16px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<!-- Onboarding (first launch) -->
+<div id="onboard">
+  <div class="ob-icon">⚡</div>
+  <div class="ob-title">Life OS</div>
+  <div class="ob-sub">Tu sistema de vida completo.<br>Activa notificaciones para que la app te recuerde tus tareas y hábitos durante el día.</div>
+  <button class="ob-btn" onclick="requestNotifPermission()">Activar notificaciones</button>
+  <div class="ob-skip" onclick="closeOnboard()">Continuar sin notificaciones</div>
+</div>
+
+<!-- Notification banner -->
+<div class="notif-banner" id="notifBanner" style="display:none">
+  <div class="nb-inner">
+    <div class="nb-ico" id="nbIco">🔔</div>
+    <div style="flex:1">
+      <div class="nb-title" id="nbTitle">Recordatorio</div>
+      <div class="nb-body" id="nbBody">Tienes tareas pendientes</div>
+    </div>
+    <div class="nb-close" onclick="closeBanner()">✕</div>
+  </div>
+</div>
+
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="greeting">Tu vida, en control</div>
+        <div class="day-name" id="dayName">Domingo, 6 abril</div>
+        <div class="day-sub" id="daySub">Semana 14 · Racha 14 días 🔥</div>
+      </div>
+      <svg class="score-ring" viewBox="0 0 48 48" onclick="showPage('score')">
+        <circle cx="24" cy="24" r="20" fill="none" stroke="var(--bg3)" stroke-width="4"/>
+        <circle cx="24" cy="24" r="20" fill="none" stroke="#1D9E75" stroke-width="4"
+          stroke-dasharray="125.7" stroke-dashoffset="32" stroke-linecap="round"
+          transform="rotate(-90 24 24)"/>
+        <text x="24" y="21" text-anchor="middle" font-size="11" font-weight="600" fill="var(--tx)">74</text>
+        <text x="24" y="30" text-anchor="middle" font-size="8" fill="var(--tx3)">score</text>
+      </svg>
+    </div>
+    <div class="quote">
+      <div class="quote-text" id="qtext">Cargando...</div>
+      <div class="quote-author" id="qauthor"></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val" style="color:var(--g)" id="hT">4/16</div><div class="stat-lbl">Tareas</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--am)" id="hH">2/5</div><div class="stat-lbl">Hábitos</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--bl)">3h</div><div class="stat-lbl">Enfocado</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--co)" id="hA">3</div><div class="stat-lbl">Alertas</div></div>
+    </div>
+  </div>
+
+  <!-- Nav tabs -->
+  <div class="nav-tabs">
+    <div class="ntab on" onclick="showPage('hoy')">Hoy</div>
+    <div class="ntab" onclick="showPage('habitos')">Hábitos</div>
+    <div class="ntab" onclick="showPage('metas')">Metas</div>
+    <div class="ntab" onclick="showPage('finanzas')">Finanzas</div>
+    <div class="ntab" onclick="showPage('focus')">Focus ⚡</div>
+    <div class="ntab" onclick="showPage('ideas')">💡 Ideas</div>
+    <div class="ntab" onclick="showPage('alertas')">Alertas</div>
+    <div class="ntab" onclick="showPage('score')">Score</div>
+  </div>
+
+  <!-- Scrollable body -->
+  <div class="tab-body">
+
+    <!-- HOY -->
+    <div id="page-hoy" class="page on">
+      <div class="sh"><div class="sh-t">Tu día real</div><div class="sh-s" id="progLbl">4 / 16</div></div>
+      <div class="pbar"><div class="pfill" id="progBar" style="width:25%"></div></div>
+      <div class="blk"><div class="bdot" style="background:var(--co)"></div>Hábito a romper · 7:00 – 7:30 am</div>
+      <div id="g-celular"></div>
+      <div class="blk"><div class="bdot" style="background:#378ADD"></div>Ritual de mañana · 7:30 – 8:30 am</div>
+      <div id="g-morning"></div>
+      <div class="blk"><div class="bdot" style="background:var(--g)"></div>Sesión de trading · 8:30 – 10:30 am</div>
+      <div id="g-trading"></div>
+      <div class="blk"><div class="bdot" style="background:var(--pu)"></div>Gym · 11:00 am – 1:30 pm</div>
+      <div id="g-gym"></div>
+      <div class="blk"><div class="bdot" style="background:var(--am)"></div>Almuerzo · 1:30 – 2:30 pm</div>
+      <div id="g-lunch"></div>
+      <div class="gold-label"><div class="bdot" style="background:var(--g)"></div>⭐ Tu hueco de oro · 2:30 – 7:00 pm</div>
+      <div id="g-gold"></div>
+      <div class="blk"><div class="bdot" style="background:#888"></div>Ritual de noche · 7:00 – 10:30 pm</div>
+      <div id="g-night"></div>
+      <button class="add-btn">+ Agregar tarea</button>
+    </div>
+
+    <!-- HÁBITOS -->
+    <div id="page-habitos" class="page">
+      <div class="sh"><div class="sh-t">Hábitos de hoy</div><div class="sh-s" id="hbtProg">2 / 5</div></div>
+      <div class="pbar"><div class="pfill" id="hbtBar" style="width:40%"></div></div>
+      <div class="hgrid" id="habitGrid"></div>
+      <div class="identity" id="identityCard"></div>
+      <button class="add-btn">+ Nuevo hábito</button>
+    </div>
+
+    <!-- METAS -->
+    <div id="page-metas" class="page">
+      <div class="blk" style="margin-top:0"><div class="bdot" style="background:var(--bl)"></div>Profesional / Bitunix</div>
+      <div id="goals-prof"></div>
+      <div class="blk"><div class="bdot" style="background:var(--g)"></div>Agencia IA / Nuevos ingresos</div>
+      <div id="goals-ia"></div>
+      <div class="blk"><div class="bdot" style="background:var(--am)"></div>Financiero</div>
+      <div id="goals-fin"></div>
+      <div class="blk"><div class="bdot" style="background:var(--pu)"></div>Personal</div>
+      <div id="goals-pers"></div>
+      <button class="add-btn">+ Nuevo objetivo</button>
+    </div>
+
+    <!-- FINANZAS -->
+    <div id="page-finanzas" class="page">
+      <div class="fin-grid">
+        <div class="fc"><div class="fl">Ingresos mes</div><div class="fv" style="color:var(--g)">$2,100</div><div class="fs">Meta $4,000 · 52%</div></div>
+        <div class="fc"><div class="fl">Gastos mes</div><div class="fv" style="color:var(--co)">$890</div><div class="fs">Límite $1,500</div></div>
+        <div class="fc"><div class="fl">Para invertir</div><div class="fv" style="color:var(--am)">Disponible</div><div class="fs">Definir monto</div></div>
+        <div class="fc"><div class="fl">Días restantes</div><div class="fv" style="color:var(--pu)">24</div><div class="fs">Necesitas $79/día</div></div>
+      </div>
+      <div class="pbar" style="margin-bottom:4px"><div class="pfill" style="width:52%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);margin-bottom:14px"><span>$0</span><span style="color:var(--g);font-weight:600">$2,100 — 52%</span><span>$4,000</span></div>
+      <div class="blk" style="margin-top:0"><div class="bdot" style="background:var(--am)"></div>Transacciones</div>
+      <div id="finTx"></div>
+      <button class="add-btn">+ Registrar transacción</button>
+    </div>
+
+    <!-- FOCUS -->
+    <div id="page-focus" class="page">
+      <div class="war">
+        <div style="font-size:24px;margin-bottom:8px">⚡</div>
+        <div class="war-task" id="warTask">Definir primer servicio agencia IA</div>
+        <div class="war-sub">Tarea crítica · Nuevos ingresos</div>
+        <div class="war-timer" id="warTimer">25:00</div>
+        <div class="war-phase" id="warPhase">Pomodoro 1 de 4</div>
+        <div class="war-btns">
+          <button class="wbtn p" onclick="toggleWar()" id="warBtn">Iniciar sesión</button>
+          <button class="wbtn s" onclick="resetWar()">Resetear</button>
+        </div>
+      </div>
+      <div class="blk" style="margin-top:4px"><div class="bdot" style="background:var(--co)"></div>Tareas críticas pendientes</div>
+      <div id="focusCrit"></div>
+    </div>
+
+    <!-- IDEAS / OPORTUNIDADES -->
+    <div id="page-ideas" class="page">
+      <div class="sh"><div class="sh-t">Oportunidades para ti</div><div class="sh-s">Elige por dónde empezar</div></div>
+      <div id="oppList"></div>
+    </div>
+
+    <!-- ALERTAS -->
+    <div id="page-alertas" class="page">
+      <div class="sh"><div class="sh-t">Centro de alertas</div><div class="sh-s" style="color:var(--co)">3 pendientes</div></div>
+      <div id="notifList"></div>
+      <div class="blk" style="margin-top:8px"><div class="bdot" style="background:var(--g)"></div>Configuración de notificaciones</div>
+      <div id="notifCfg"></div>
+    </div>
+
+    <!-- SCORE -->
+    <div id="page-score" class="page" style="padding:0">
+      <div class="score-hero">
+        <div class="snum">74</div>
+        <div class="smsg">Buen día — por encima de tu promedio</div>
+      </div>
+      <div style="padding:16px 20px">
+        <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:4px">Esta semana</div>
+        <div class="wrow" id="weekBars"></div>
+        <div style="display:flex;gap:6px;justify-content:space-around">
+          <span class="wday">L</span><span class="wday">M</span><span class="wday">M</span>
+          <span class="wday">J</span><span class="wday">V</span><span class="wday">S</span><span class="wday">D</span>
+        </div>
+        <div class="sbg">
+          <div class="sbc"><div class="sbl">Críticas</div><div class="sbv" style="color:var(--am)">2/3</div></div>
+          <div class="sbc"><div class="sbl">Hábitos</div><div class="sbv" style="color:var(--g)">2/5</div></div>
+          <div class="sbc"><div class="sbl">Hueco de oro</div><div class="sbv" style="color:var(--co)">0%</div></div>
+          <div class="sbc"><div class="sbl">Ritual mañana</div><div class="sbv" style="color:var(--g)">80%</div></div>
+          <div class="sbc"><div class="sbl">Promedio semana</div><div class="sbv" style="color:var(--pu)">71</div></div>
+          <div class="sbc"><div class="sbl">Mejor racha</div><div class="sbv" style="color:var(--g)">14 días</div></div>
+        </div>
+        <button class="add-btn" style="margin-top:16px">Weekly review</button>
+      </div>
+    </div>
+
+  </div><!-- /tab-body -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════
+// DATA — edita aquí para personalizar
+// ═══════════════════════════════════════════
+const QUOTES = [
+  {t:"No cuentes los días, haz que los días cuenten.",a:"Muhammad Ali"},
+  {t:"Disciplina es elegir entre lo que quieres ahora y lo que quieres más.",a:"Abraham Lincoln"},
+  {t:"El éxito no es un accidente. Es trabajo duro y sacrificio.",a:"Pelé"},
+  {t:"Tu único competidor eres tú mismo de ayer.",a:"Anónimo"},
+  {t:"Un día o el día uno. Tú decides.",a:"Anónimo"},
+  {t:"La motivación te arranca. El hábito te mantiene en movimiento.",a:"Jim Ryun"},
+  {t:"Las grandes oportunidades llegan a quienes están preparados.",a:"Louis Pasteur"},
+  {t:"Trabaja en silencio. Deja que tu éxito haga el ruido.",a:"Anónimo"},
+  {t:"No esperes el momento perfecto. Tómalo y hazlo perfecto.",a:"Anónimo"},
+  {t:"El tiempo que pierdes hoy es el progreso que no verás mañana.",a:"Anónimo"},
+  {t:"Primero forma tus hábitos, luego tus hábitos te forman.",a:"John Dryden"},
+  {t:"La riqueza no se construye en un día, pero los hábitos de hoy la definen.",a:"Anónimo"},
+  {t:"Sé el tipo de persona que en un año te gustaría haber sido.",a:"Anónimo"},
+  {t:"Cada mañana tienes dos opciones: seguir durmiendo o ir por tus sueños.",a:"Anónimo"},
+];
+
+const GROUPS = {
+  celular: [
+    {n:'Celular en cama (hábito a romper)',t:'7:00',done:false,area:'co',crit:false,bad:true},
+  ],
+  morning: [
+    {n:'Proteína + desayuno',t:'7:30',done:false,area:'g',crit:false,bad:false},
+    {n:'Leer algo nuevo hoy (IA, mercados, tech)',t:'7:40',done:false,area:'bl',crit:true,bad:false},
+    {n:'Definir 3 tareas críticas del día',t:'8:10',done:false,area:'bl',crit:true,bad:false},
+  ],
+  trading: [
+    {n:'Análisis pre-sesión · setup del día',t:'8:30',done:false,area:'g',crit:true,bad:false},
+    {n:'Sesión de trading activa',t:'8:45',done:false,area:'g',crit:true,bad:false},
+    {n:'Registrar trade: entrada, resultado, aprendizaje',t:'10:30',done:false,area:'am',crit:true,bad:false},
+  ],
+  gym: [
+    {n:'Ir al gym',t:'11:00',done:false,area:'g',crit:false,bad:false},
+    {n:'Entrenamiento completo',t:'11:15',done:false,area:'g',crit:false,bad:false},
+    {n:'Ducha + vuelta a casa',t:'1:00',done:false,area:'g',crit:false,bad:false},
+  ],
+  lunch: [
+    {n:'Pedir almuerzo saludable',t:'1:30',done:false,area:'am',crit:false,bad:false},
+    {n:'Comer sin pantallas — 20 min de desconexión',t:'1:45',done:false,area:'pu',crit:false,bad:false},
+  ],
+  gold: [
+    {n:'Bloque IA / agencia: aprender o construir algo concreto',t:'2:30',done:false,area:'bl',crit:true,bad:false},
+    {n:'Trabajo BD Bitunix: leads, seguimiento, métricas',t:'4:00',done:false,area:'bl',crit:true,bad:false},
+    {n:'Lectura 30 min',t:'5:30',done:false,area:'pu',crit:false,bad:false},
+    {n:'Tiempo libre / descanso activo',t:'6:00',done:false,area:'pu',crit:false,bad:false},
+  ],
+  night: [
+    {n:'Proteína noche (en vez de cena pesada)',t:'7:00',done:false,area:'g',crit:false,bad:false},
+    {n:'Revisión del día + score diario',t:'8:30',done:false,area:'bl',crit:true,bad:false},
+    {n:'Preparar el día siguiente (agenda + 3 críticas)',t:'9:00',done:false,area:'bl',crit:false,bad:false},
+    {n:'Sin pantallas — lectura o meditación',t:'9:30',done:false,area:'pu',crit:false,bad:false},
+    {n:'Dormir',t:'10:30',done:false,area:'g',crit:false,bad:false},
+  ],
+};
+
+const HABITS = [
+  {name:'Proteína mañana',icon:'💪',streak:5,done:false,bad:false},
+  {name:'Sin celular >30min',icon:'📵',streak:0,done:false,bad:true},
+  {name:'Registrar trade',icon:'📊',streak:3,done:false,bad:false},
+  {name:'Leer algo nuevo',icon:'🧠',streak:2,done:false,bad:false},
+  {name:'Proteína noche',icon:'🥛',streak:1,done:false,bad:false},
+];
+
+const GOALS = [
+  {name:'Cerrar 10 clientes Bitunix',area:'prof',cur:6,tar:10,unit:'',color:'--bl'},
+  {name:'Lanzar servicio IA (30 días)',area:'ia',cur:5,tar:100,unit:'%',color:'--g'},
+  {name:'Primera venta agencia IA',area:'ia',cur:0,tar:1,unit:'',color:'--g'},
+  {name:'Ingresos mes: $4,000',area:'fin',cur:2100,tar:4000,unit:'$',color:'--am'},
+  {name:'Fondo inversión: $2,000',area:'fin',cur:800,tar:2000,unit:'$',color:'--am'},
+  {name:'Gym 5x por semana',area:'pers',cur:3,tar:5,unit:'días',color:'--co'},
+];
+
+const FIN_TX = [
+  {desc:'Comisión BD Bitunix',type:'ingreso',amt:'+$350',date:'Hoy'},
+  {desc:'Almuerzo domicilio',type:'gasto',amt:'-$12',date:'Hoy 1:45pm'},
+  {desc:'Gym membresía',type:'gasto',amt:'-$45',date:'Vie 4'},
+  {desc:'Comisión trade EUR/USD',type:'ingreso',amt:'+$280',date:'Jue 3'},
+];
+
+const OPPS = [
+  {name:'Agencia de IA ⭐',tag:'Alto potencial',tc:'g',desc:'Ofreces automatizaciones, chatbots y contenido con IA a negocios. Empiezas con 1 servicio, 1 cliente, 1 caso de éxito.',meta:['$500–5,000/mes','Listo en 2–4 semanas','Inversión: tiempo']},
+  {name:'Contenido trading + IA ⭐',tag:'Ingreso pasivo',tc:'pu',desc:'Tu experiencia en trading y IA vale. Cuenta en X/Instagram mostrando lo que haces. Monetización con afiliados o membresía.',meta:['Escala solo','Empieza hoy','$0 inversión']},
+  {name:'Inversión estructurada',tag:'Capital',tc:'am',desc:'Con dinero disponible, asignar capital de forma diversificada: ETFs de IA, cripto largo plazo, no todo al trading activo.',meta:['Retorno variable','Requiere plan','Inversión: capital']},
+  {name:'Curso / bootcamp de IA',tag:'Habilidades',tc:'bl',desc:'Aprender prompting avanzado, APIs de IA, automatización con n8n o Make. Base sólida para la agencia.',meta:['1–4 semanas','$0–200','ROI: muy alto']},
+  {name:'SaaS de nicho con IA',tag:'Largo plazo',tc:'co',desc:'Una herramienta pequeña y específica para un nicho (traders, coaches). Ingreso recurrente automático.',meta:['3–6 meses','Tiempo + código','Potencial: muy alto']},
+];
+
+const WEEK_SCORES = [62,78,55,81,74,90,74];
+
+// ═══════════════════════════════════════════
+// NOTIFICATION CONFIG — edita horarios aquí
+// ═══════════════════════════════════════════
+const NOTIF_CFG = [
+  {lbl:'Mensaje motivacional',desc:'Cada mañana a las 7:35am',on:true,hour:7,min:35,msg:'Buenos días 🔥',body:'Tu mensaje del día te espera en la app.'},
+  {lbl:'Alerta: celular al despertar',desc:'A los 30 min de la alarma — te recuerda cerrarlo',on:true,hour:7,min:30,msg:'📵 Tiempo de cerrar el celular',body:'30 minutos ya pasaron. Arranca tu día.'},
+  {lbl:'Inicio sesión de trading',desc:'A las 8:25am para que entres preparado',on:true,hour:8,min:25,msg:'📈 Sesión de trading en 5 min',body:'Prepara tu análisis. El mercado no espera.'},
+  {lbl:'Registro del trade',desc:'30 min después de tu sesión si no lo registraste',on:true,hour:11,min:0,msg:'📊 ¿Registraste el trade?',body:'Sin registro no hay aprendizaje. Tarda 2 minutos.'},
+  {lbl:'Hueco de oro — inicio',desc:'A las 2:30pm empieza tu bloque de construcción',on:true,hour:14,min:30,msg:'⭐ Empieza tu hueco de oro',body:'4.5 horas para construir tu futuro. ¿Qué vas a hacer hoy?'},
+  {lbl:'Bloque IA / agencia',desc:'Recordatorio dentro del hueco de oro',on:true,hour:15,min:0,msg:'💡 Bloque agencia IA',body:'Dedica al menos 1 hora a construir algo hoy.'},
+  {lbl:'Hábitos pendientes',desc:'A las 9pm si algún hábito sigue sin completar',on:true,hour:21,min:0,msg:'🔁 Hábitos pendientes',body:'Revisa tus hábitos antes de cerrar el día.'},
+  {lbl:'Revisión nocturna',desc:'A las 8:30pm para tu revisión y score',on:false,hour:20,min:30,msg:'📋 Hora de tu revisión del día',body:'5 minutos. ¿Cómo estuvo tu día?'},
+  {lbl:'Weekly review (domingos)',desc:'Domingos a las 7pm — revisión semanal',on:false,hour:19,min:0,msg:'🔄 Weekly review',body:'Tómate 10 min para revisar tu semana completa.'},
+];
+
+const LIVE_NOTIFS = [
+  {ico:'⚠️',bg:'#FAECE7',title:'Registro del trade pendiente',desc:'Terminó tu sesión hace 30 min y aún no registraste el resultado.',time:'hace 30 min',act:'Ir a Hoy'},
+  {ico:'✅',bg:'#E1F5EE',title:'Proteína del desayuno ✓',desc:'Marcaste tu proteína de mañana. Sigue así.',time:'hace 1h',act:''},
+  {ico:'🔔',bg:'#FAEEDA',title:'Hueco de oro empieza pronto',desc:'A las 2:30pm empieza tu bloque más valioso. ¿Qué vas a construir hoy?',time:'hace 5 min',act:'Ver tareas'},
+];
+
+// ═══════════════════════════════════════════
+// APP ENGINE
+// ═══════════════════════════════════════════
+const AREA_MAP = {g:'Personal',bl:'Profesional',am:'Finanzas',co:'Salud',pu:'Mental'};
+
+function mkTask(t,i,grp){
+  return`<div class="tr" onclick="toggleTask('${grp}',${i})">
+    ${t.crit&&!t.done?'<div class="cdot"></div>':''}
+    <div class="chk${t.done?' done':t.bad?' bad':''}"></div>
+    <div class="tb">
+      <div class="tn${t.done?' done':''}">${t.n}</div>
+      <div class="tf">
+        <span class="pill ${t.area}">${AREA_MAP[t.area]}</span>
+        <span class="ttag">${t.t}</span>
+        ${t.crit&&!t.done?'<span class="pill co">Crítica</span>':''}
+        ${t.bad?'<span class="pill rl">Romper</span>':''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleTask(grp,i){GROUPS[grp][i].done=!GROUPS[grp][i].done;render();saveState()}
+function toggleHabit(i){
+  HABITS[i].done=!HABITS[i].done;
+  HABITS[i].streak+=HABITS[i].done?1:-1;
+  HABITS[i].streak=Math.max(0,HABITS[i].streak);
+  render();saveState();
+}
+
+function render(){
+  Object.keys(GROUPS).forEach(g=>{
+    const el=document.getElementById('g-'+g);
+    if(el)el.innerHTML=GROUPS[g].map((t,i)=>mkTask(t,i,g)).join('');
+  });
+
+  const all=Object.values(GROUPS).flat();
+  const done=all.filter(t=>t.done).length;
+  const pct=Math.round(done/all.length*100);
+  document.getElementById('progLbl').textContent=done+' / '+all.length;
+  document.getElementById('progBar').style.width=pct+'%';
+  document.getElementById('hT').textContent=done+'/'+all.length;
+
+  const hd=HABITS.filter(h=>h.done).length;
+  document.getElementById('hH').textContent=hd+'/'+HABITS.length;
+  document.getElementById('hbtProg').textContent=hd+' / '+HABITS.length;
+  document.getElementById('hbtBar').style.width=Math.round(hd/HABITS.length*100)+'%';
+
+  document.getElementById('habitGrid').innerHTML=HABITS.map((h,i)=>
+    `<div class="hcard${h.done?' done':h.bad&&!h.done?' bad-h':''}" onclick="toggleHabit(${i})">
+      <div class="hico">${h.icon}</div>
+      <div class="hn">${h.name}</div>
+      <div class="hs${h.streak===0?' z':''}">${h.streak>0?'🔥 '+h.streak+' días':'Hoy día 1'}</div>
+    </div>`).join('');
+
+  const identRows=HABITS.filter(h=>h.streak>=2&&!h.bad).map(h=>
+    `<div class="id-row"><span>${h.icon}</span><span class="id-name">Soy alguien que ${h.name.toLowerCase()}</span><span class="id-streak">🔥 ${h.streak}d</span></div>`
+  ).join('');
+  document.getElementById('identityCard').innerHTML=`<div class="id-title">Identidad que construyes</div>${identRows||'<div style="font-size:12px;color:var(--tx3)">Completa hábitos para ver tu identidad aquí</div>'}`;
+
+  const goalGroups={prof:'goals-prof',ia:'goals-ia',fin:'goals-fin',pers:'goals-pers'};
+  Object.entries(goalGroups).forEach(([area,id])=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.innerHTML=GOALS.filter(g=>g.area===area).map(g=>{
+      const pct=Math.round(g.cur/g.tar*100);
+      const cur=g.unit==='$'?'$'+g.cur.toLocaleString():g.cur+(g.unit?' '+g.unit:'');
+      const tar=g.unit==='$'?'$'+g.tar.toLocaleString():g.tar+(g.unit?' '+g.unit:'');
+      return`<div class="goal-card">
+        <div class="gc-top"><div class="gc-name">${g.name}</div><div style="font-size:13px;font-weight:600;color:var(${g.color})">${pct}%</div></div>
+        <div class="gc-bar"><div class="gc-fill" style="width:${pct}%;background:var(${g.color})"></div></div>
+        <div class="gc-sub"><span>${cur} de ${tar}</span><span>${100-pct}% restante</span></div>
+      </div>`;
+    }).join('');
+  });
+
+  document.getElementById('finTx').innerHTML=FIN_TX.map(tx=>
+    `<div class="tr" style="cursor:default">
+      <div class="chk" style="background:${tx.type==='ingreso'?'var(--gl)':'var(--rl)'};border:none"></div>
+      <div class="tb">
+        <div class="tn">${tx.desc}</div>
+        <div class="tf">
+          <span class="pill ${tx.type==='ingreso'?'g':'rl'}">${tx.type}</span>
+          <span class="ttag">${tx.date}</span>
+          <span style="font-size:13px;font-weight:600;color:${tx.type==='ingreso'?'var(--g)':'var(--co)'};margin-left:auto">${tx.amt}</span>
+        </div>
+      </div>
+    </div>`).join('');
+
+  const crit=all.filter(t=>t.crit&&!t.done);
+  document.getElementById('focusCrit').innerHTML=crit.length?crit.map(t=>
+    `<div class="tr" onclick="document.getElementById('warTask').textContent='${t.n.replace(/'/g,"\\'")}';showPage('focus')">
+      <div class="cdot"></div><div class="chk"></div>
+      <div class="tb"><div class="tn">${t.n}</div><div class="tf"><span class="pill co">Crítica</span><span class="ttag">${t.t}</span><span style="font-size:10px;color:var(--g)">Atacar →</span></div></div>
+    </div>`).join(''):'<div style="padding:16px 0;text-align:center;font-size:13px;color:var(--tx3)">Todas las críticas completadas 🎉</div>';
+
+  document.getElementById('notifList').innerHTML=LIVE_NOTIFS.map(n=>
+    `<div class="ni">
+      <div class="ni-ico" style="background:${n.bg}">${n.ico}</div>
+      <div style="flex:1"><div class="ni-title">${n.title}</div><div class="ni-desc">${n.desc}</div><div class="ni-time">${n.time}</div>${n.act?`<div class="ni-act">${n.act} →</div>`:''}</div>
+    </div>`).join('');
+
+  document.getElementById('notifCfg').innerHTML=NOTIF_CFG.map((c,i)=>
+    `<div class="tog-row" onclick="toggleNotif(${i})">
+      <div class="tog-body"><div class="tog-lbl">${c.lbl}</div><div class="tog-desc">${c.desc}</div></div>
+      <div class="tog" style="background:${c.on?'var(--g)':'var(--bg3)'}"><div class="tok" style="left:${c.on?'18px':'2px'}"></div></div>
+    </div>`).join('');
+
+  document.getElementById('oppList').innerHTML=OPPS.map(o=>
+    `<div class="opp-card">
+      <div class="opp-top"><div class="opp-name">${o.name}</div><span class="pill ${o.tc}">${o.tag}</span></div>
+      <div class="opp-desc">${o.desc}</div>
+      <div class="opp-foot">${o.meta.map(m=>`<span class="opp-meta">${m}</span>`).join('')}</div>
+    </div>`).join('');
+
+  document.getElementById('weekBars').innerHTML=WEEK_SCORES.map(s=>
+    `<div class="wbc"><div class="wbg"><div class="wbf${s<65?' lo':''}" style="height:${s}%"></div></div></div>`).join('');
+}
+
+function toggleNotif(i){
+  NOTIF_CFG[i].on=!NOTIF_CFG[i].on;
+  render();
+  scheduleNotifications();
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+const PAGES=['hoy','habitos','metas','finanzas','focus','ideas','alertas','score'];
+function showPage(id){
+  PAGES.forEach(p=>{
+    document.getElementById('page-'+p).classList.toggle('on',p===id);
+  });
+  document.querySelectorAll('.ntab').forEach((el,i)=>{
+    el.classList.toggle('on',PAGES[i]===id);
+  });
+}
+
+// ═══════════════════════════════════════════
+// POMODORO
+// ═══════════════════════════════════════════
+let warRunning=false,warInt=null,warSec=1500,warPom=1;
+function toggleWar(){
+  if(!warRunning){
+    warRunning=true;document.getElementById('warBtn').textContent='Pausar';
+    warInt=setInterval(()=>{
+      warSec--;
+      if(warSec<=0){
+        clearInterval(warInt);warRunning=false;warPom++;
+        warSec=warPom%2===0?300:1500;
+        document.getElementById('warPhase').textContent=warPom%2===0?'Descanso 5 min ☕':'Pomodoro '+Math.ceil(warPom/2)+' de 4';
+        document.getElementById('warBtn').textContent='Siguiente';
+        showBanner('⏱️','Pomodoro completado',warPom%2===0?'Descansa 5 minutos ☕':'¡Pomodoro listo! Tómate un descanso.');
+      }
+      document.getElementById('warTimer').textContent=
+        String(Math.floor(warSec/60)).padStart(2,'0')+':'+String(warSec%60).padStart(2,'0');
+    },1000);
+  }else{clearInterval(warInt);warRunning=false;document.getElementById('warBtn').textContent='Continuar';}
+}
+function resetWar(){
+  clearInterval(warInt);warRunning=false;warSec=1500;warPom=1;
+  document.getElementById('warTimer').textContent='25:00';
+  document.getElementById('warBtn').textContent='Iniciar sesión';
+  document.getElementById('warPhase').textContent='Pomodoro 1 de 4';
+}
+
+// ═══════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════
+let notifPermission = false;
+let scheduledTimers = [];
+
+async function requestNotifPermission(){
+  if('Notification' in window){
+    const result = await Notification.requestPermission();
+    notifPermission = result === 'granted';
+  }
+  closeOnboard();
+  if(notifPermission) scheduleNotifications();
+}
+
+function closeOnboard(){
+  document.getElementById('onboard').style.display='none';
+  localStorage.setItem('lifeos_onboarded','1');
+}
+
+function scheduleNotifications(){
+  // Clear existing timers
+  scheduledTimers.forEach(t=>clearTimeout(t));
+  scheduledTimers=[];
+
+  const now=new Date();
+  NOTIF_CFG.forEach(cfg=>{
+    if(!cfg.on)return;
+    const target=new Date();
+    target.setHours(cfg.hour,cfg.min,0,0);
+    let ms=target-now;
+    if(ms<0)ms+=86400000; // next day
+    const t=setTimeout(()=>{
+      sendNotification(cfg.msg,cfg.body);
+      showBanner('🔔',cfg.msg,cfg.body);
+    },ms);
+    scheduledTimers.push(t);
+  });
+}
+
+function sendNotification(title,body){
+  if(notifPermission && 'Notification' in window && Notification.permission==='granted'){
+    navigator.serviceWorker.ready.then(sw=>{
+      sw.showNotification(title,{body,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',vibrate:[200,100,200]});
+    }).catch(()=>{
+      new Notification(title,{body,icon:'/icons/icon-192.png'});
+    });
+  }
+}
+
+// In-app banner
+let bannerTimer=null;
+function showBanner(ico,title,body){
+  document.getElementById('nbIco').textContent=ico;
+  document.getElementById('nbTitle').textContent=title;
+  document.getElementById('nbBody').textContent=body;
+  document.getElementById('notifBanner').style.display='block';
+  clearTimeout(bannerTimer);
+  bannerTimer=setTimeout(closeBanner,5000);
+}
+function closeBanner(){
+  document.getElementById('notifBanner').style.display='none';
+}
+
+// ═══════════════════════════════════════════
+// PERSISTENCE (localStorage)
+// ═══════════════════════════════════════════
+function saveState(){
+  const state={
+    groups:Object.fromEntries(Object.entries(GROUPS).map(([k,v])=>[k,v.map(t=>t.done)])),
+    habits:HABITS.map(h=>({done:h.done,streak:h.streak})),
+    date:new Date().toDateString()
+  };
+  localStorage.setItem('lifeos_state',JSON.stringify(state));
+}
+
+function loadState(){
+  const raw=localStorage.getItem('lifeos_state');
+  if(!raw)return;
+  try{
+    const s=JSON.parse(raw);
+    // Reset if new day
+    if(s.date !== new Date().toDateString()){
+      localStorage.removeItem('lifeos_state');
+      return;
+    }
+    Object.entries(s.groups).forEach(([grp,dones])=>{
+      if(GROUPS[grp]) dones.forEach((d,i)=>{if(GROUPS[grp][i])GROUPS[grp][i].done=d});
+    });
+    s.habits.forEach((h,i)=>{if(HABITS[i]){HABITS[i].done=h.done;HABITS[i].streak=h.streak}});
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+function init(){
+  // Quote
+  const q=QUOTES[new Date().getDay()%QUOTES.length];
+  document.getElementById('qtext').textContent='\u201c'+q.t+'\u201d';
+  document.getElementById('qauthor').textContent='\u2014 '+q.a;
+
+  // Date
+  const now=new Date();
+  const days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  document.getElementById('dayName').textContent=days[now.getDay()]+', '+now.getDate()+' '+months[now.getMonth()];
+
+  // Load saved state
+  loadState();
+
+  // Hide onboard if already done
+  if(localStorage.getItem('lifeos_onboarded')){
+    document.getElementById('onboard').style.display='none';
+    if('Notification' in window && Notification.permission==='granted'){
+      notifPermission=true;
+      scheduleNotifications();
+    }
+  }
+
+  // Service Worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  }
+
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
