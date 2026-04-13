@@ -228,6 +228,25 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:-apple-sy
 /* ONBOARD */
 #ob{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
 .ob-ico{font-size:64px;margin-bottom:20px}.ob-t{font-size:24px;font-weight:700;color:var(--tx);margin-bottom:8px}
+
+/* DAILY CHECK-IN */
+#checkin{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;display:flex;align-items:flex-end;justify-content:center}
+.ci-sheet{background:var(--bg);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:430px;animation:sld .3s ease}
+.ci-greeting{font-size:22px;font-weight:700;color:var(--tx);margin-bottom:4px}
+.ci-sub{font-size:14px;color:var(--tx3);margin-bottom:20px}
+.ci-q{font-size:13px;font-weight:600;color:var(--tx2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+.ci-options{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.ci-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--br2);cursor:pointer;user-select:none;transition:all .15s;background:var(--bg)}
+.ci-opt:active{transform:scale(.98)}
+.ci-opt.sel{border-color:var(--g);background:var(--gl)}
+.ci-opt-ico{font-size:20px;flex-shrink:0}
+.ci-opt-body{flex:1}
+.ci-opt-name{font-size:14px;font-weight:500;color:var(--tx)}
+.ci-opt-desc{font-size:11px;color:var(--tx3);margin-top:1px}
+.ci-extra{width:100%;padding:11px 14px;border-radius:10px;border:0.5px solid var(--br2);background:var(--bg2);color:var(--tx);font-size:14px;margin-bottom:14px;font-family:inherit;outline:none;display:none}
+.ci-btn{width:100%;padding:14px;border-radius:14px;background:var(--g);color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.ci-btn:active{opacity:.85}
+.ci-skip{text-align:center;font-size:13px;color:var(--tx3);margin-top:12px;cursor:pointer}
 .ob-s{font-size:15px;color:var(--tx2);line-height:1.6;margin-bottom:32px}
 .ob-btn{background:var(--g);color:#fff;border:none;border-radius:14px;padding:16px 36px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:320px;font-family:inherit}
 .ob-sk{font-size:13px;color:var(--tx3);margin-top:16px;cursor:pointer}
@@ -241,6 +260,40 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:-apple-sy
   <div class="ob-s">Tu sistema de vida completo.<br>Activa notificaciones para que la app te avise durante el día.</div>
   <button class="ob-btn" onclick="askNotif()">Activar notificaciones</button>
   <div class="ob-sk" onclick="skipOb()">Continuar sin notificaciones</div>
+</div>
+
+<!-- DAILY CHECK-IN -->
+<div id="checkin" style="display:none">
+  <div class="ci-sheet">
+    <div class="ci-greeting" id="ciGreeting">Buenos días 👋</div>
+    <div class="ci-sub" id="ciSub">¿Cómo es tu día hoy?</div>
+    <div class="ci-q">¿Qué cambia en tu rutina hoy?</div>
+    <div class="ci-options">
+      <div class="ci-opt" onclick="toggleCiOpt(this,'notrading')" data-key="notrading">
+        <div class="ci-opt-ico">📊</div>
+        <div class="ci-opt-body"><div class="ci-opt-name">Sin trading hoy</div><div class="ci-opt-desc">No abro posiciones — análisis o descanso</div></div>
+      </div>
+      <div class="ci-opt" onclick="toggleCiOpt(this,'nogym')" data-key="nogym">
+        <div class="ci-opt-ico">🏋️</div>
+        <div class="ci-opt-body"><div class="ci-opt-name">Sin gym hoy</div><div class="ci-opt-desc">Me salto el entrenamiento de hoy</div></div>
+      </div>
+      <div class="ci-opt" onclick="toggleCiOpt(this,'wfh')" data-key="wfh">
+        <div class="ci-opt-ico">💼</div>
+        <div class="ci-opt-body"><div class="ci-opt-name">Día intenso de trabajo</div><div class="ci-opt-desc">BD Bitunix o reuniones — más foco hoy</div></div>
+      </div>
+      <div class="ci-opt" onclick="toggleCiOpt(this,'free')" data-key="free">
+        <div class="ci-opt-ico">🌴</div>
+        <div class="ci-opt-body"><div class="ci-opt-name">Día libre / relajado</div><div class="ci-opt-desc">Sin estructura fija hoy</div></div>
+      </div>
+      <div class="ci-opt" onclick="toggleCiOpt(this,'extra')" data-key="extra">
+        <div class="ci-opt-ico">➕</div>
+        <div class="ci-opt-body"><div class="ci-opt-name">Tengo algo especial hoy</div><div class="ci-opt-desc">Evento, cita, reunión o tarea única</div></div>
+      </div>
+    </div>
+    <input class="ci-extra" id="ciExtraText" placeholder="¿Qué tienes? (ej: Cita médica 3pm, Cliente nuevo...)">
+    <button class="ci-btn" onclick="applyCheckin()">Empezar el día ⚡</button>
+    <div class="ci-skip" onclick="skipCheckin()">Mi rutina es igual → continuar</div>
+  </div>
 </div>
 
 <div class="banner" id="banner" style="display:none">
@@ -1028,25 +1081,137 @@ function load(){
 }
 
 // ══════════════════════════════════════════════
+// WEEKEND MODE
+// ══════════════════════════════════════════════
+const WEEKEND_TASKS={
+  free:[
+    {n:'Levantarse sin alarma — dormir lo que necesitas',t:'Sin hora',done:false,area:'g',crit:false,bad:false},
+    {n:'Desayuno relajado',t:'Sin hora',done:false,area:'g',crit:false,bad:false},
+    {n:'Actividad física: caminata, deporte o gym opcional',t:'Sin hora',done:false,area:'g',crit:false,bad:false},
+    {n:'Tiempo social: amigos, familia o salida',t:'Sin hora',done:false,area:'pu',crit:false,bad:false},
+    {n:'Lectura o algo que disfrutes',t:'Sin hora',done:false,area:'pu',crit:false,bad:false},
+    {n:'Review semanal (solo domingos)',t:'7:00 pm',done:false,area:'bl',crit:true,bad:false},
+    {n:'Preparar semana siguiente',t:'8:00 pm',done:false,area:'bl',crit:false,bad:false},
+  ]
+};
+
+function applyWeekendMode(){
+  // Replace all groups with weekend free structure
+  Object.keys(G).forEach(k=>G[k].forEach(t=>t.done=false));
+  G.gold=WEEKEND_TASKS.free;
+  G.celular=[];G.morning=[];G.trading=[];G.gym=[];G.lunch=[];G.night=[];
+  // Update block labels
+  document.querySelectorAll('.blk, .gold-blk').forEach(el=>el.style.display='none');
+  const goldBlk=document.querySelector('.gold-blk');
+  if(goldBlk){goldBlk.style.display='flex';goldBlk.textContent='🌴 Fin de semana libre — sin estructura';}
+}
+
+// ══════════════════════════════════════════════
+// DAILY CHECK-IN
+// ══════════════════════════════════════════════
+let ciSelections=new Set();
+
+function toggleCiOpt(el,key){
+  el.classList.toggle('sel');
+  if(ciSelections.has(key))ciSelections.delete(key);
+  else ciSelections.add(key);
+  // Show extra input if "extra" selected
+  document.getElementById('ciExtraText').style.display=ciSelections.has('extra')?'block':'none';
+}
+
+function applyCheckin(){
+  // Apply modifications based on selections
+  if(ciSelections.has('notrading')){
+    G.trading.forEach(t=>{
+      if(t.n.toLowerCase().includes('trading')||t.n.toLowerCase().includes('sesión')||t.n.toLowerCase().includes('trade')){
+        t.n='[Cancelado] '+t.n;t.done=true;
+      }
+    });
+  }
+  if(ciSelections.has('nogym')){
+    G.gym.forEach(t=>{t.n='[Cancelado] '+t.n;t.done=true;});
+  }
+  if(ciSelections.has('wfh')){
+    G.gold.unshift({n:'Bloque extra trabajo / BD Bitunix',t:'2:30',done:false,area:'bl',crit:true,bad:false});
+  }
+  if(ciSelections.has('free')){
+    G.gold.forEach(t=>{if(t.crit)t.crit=false});
+    G.gold.push({n:'Descanso y recarga — sin culpa',t:'4:00',done:false,area:'pu',crit:false,bad:false});
+  }
+  if(ciSelections.has('extra')){
+    const txt=document.getElementById('ciExtraText').value.trim();
+    if(txt){
+      G.gold.unshift({n:txt,t:'Hoy',done:false,area:'g',crit:true,bad:false});
+    }
+  }
+  document.getElementById('checkin').style.display='none';
+  localStorage.setItem('ci_date',new Date().toDateString());
+  render();
+}
+
+function skipCheckin(){
+  document.getElementById('checkin').style.display='none';
+  localStorage.setItem('ci_date',new Date().toDateString());
+  render();
+}
+
+function showCheckin(){
+  const now=new Date();
+  const day=now.getDay();
+  const hours=['Madrugada','Buenos días','Buenos días','Buenas tardes','Buenas tardes','Buenas tardes','Buenas noches'];
+  const h=now.getHours();
+  const greeting=h<6?'Madrugada':h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches';
+  const dayNames=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  document.getElementById('ciGreeting').textContent=greeting+' 👋';
+  document.getElementById('ciSub').textContent='Es '+dayNames[day]+'. ¿Qué cambia en tu rutina hoy?';
+  document.getElementById('checkin').style.display='flex';
+}
+
+// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 function init(){
-  const q=QUOTES[new Date().getDay()%QUOTES.length];
+  const now=new Date();
+  const day=now.getDay(); // 0=Sun, 6=Sat
+  const isWeekend=day===0||day===6;
+
+  // Quote
+  const q=QUOTES[day%QUOTES.length];
   document.getElementById('qT').textContent='\u201c'+q.t+'\u201d';
   document.getElementById('qA').textContent='\u2014 '+q.a;
-  const now=new Date();
+
+  // Date header
   const days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  document.getElementById('dayN').textContent=days[now.getDay()]+', '+now.getDate()+' '+months[now.getMonth()];
+  document.getElementById('dayN').textContent=days[day]+', '+now.getDate()+' '+months[now.getMonth()];
   const wk=Math.ceil((now-new Date(now.getFullYear(),0,1))/(7*86400000));
   const dy=Math.ceil((now-new Date(now.getFullYear(),0,0))/86400000);
-  document.getElementById('dayS').textContent='Semana '+wk+' · Día '+dy+' del año · Racha 14 días 🔥';
+  const streak=isWeekend?'Fin de semana 🌴':'Racha 14 días 🔥';
+  document.getElementById('dayS').textContent='Semana '+wk+' · Día '+dy+' del año · '+streak;
+
+  // Load saved data
   load();
+
+  // Weekend mode
+  if(isWeekend) applyWeekendMode();
+
+  // Onboarding
   if(localStorage.getItem('ob')){
     document.getElementById('ob').style.display='none';
     if('Notification' in window&&Notification.permission==='granted'){nOk=true;schedN();}
   }
+
+  // Service Worker
   if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+  // Daily check-in — show once per day, only on weekdays, after onboarding done
+  const ciDate=localStorage.getItem('ci_date');
+  const obDone=localStorage.getItem('ob');
+  if(obDone && !isWeekend && ciDate!==now.toDateString()){
+    // Small delay so app renders first
+    setTimeout(showCheckin, 600);
+  }
+
   render();
 }
 init();
