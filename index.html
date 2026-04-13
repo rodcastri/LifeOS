@@ -496,6 +496,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:-apple-sy
       <div class="blk"><div class="bdot" style="background:var(--am)"></div>Todas las transacciones</div>
       <div id="txList"></div>
       <button class="add" onclick="document.getElementById('mTx').style.display='flex'">+ Registrar transacción</button>
+      <button class="add" onclick="ciSelections=new Set();document.querySelectorAll('.ci-opt').forEach(e=>e.classList.remove('sel'));document.getElementById('ciExtraText').style.display='none';document.getElementById('ciExtraText').value='';showCheckin()">🔄 Modificar mi día de hoy</button>
     </div>
 
     <!-- NQ TRADING -->
