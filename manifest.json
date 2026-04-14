@@ -1,10 +1,11 @@
 {
   "name": "Life OS Pro",
   "short_name": "Life OS",
-  "description": "Sistema personal profesional para tareas, hábitos, finanzas y trading.",
-  "start_url": "/",
+  "description": "Sistema personal profesional para tareas, h\u00e1bitos, finanzas y trading.",
+  "start_url": "/LifeOS/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "scope": "/LifeOS/"
 }
